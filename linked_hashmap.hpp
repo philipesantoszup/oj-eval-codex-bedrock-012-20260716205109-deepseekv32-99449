@@ -164,11 +164,10 @@ public:
 		 * TODO ++iter
 		 */
 		iterator & operator++() {
-            if (node_ptr) {
-                node_ptr = node_ptr->order_next;
-            } else {
+            if (!node_ptr) {
                 throw invalid_iterator();
             }
+            node_ptr = node_ptr->order_next;
             return *this;
         }
         
@@ -185,6 +184,10 @@ public:
                 node_ptr = node_ptr->order_prev;
             } else {
                 // end() iterator, go to last element
+                if (!container->tail) {
+                    // Empty container
+                    throw invalid_iterator();
+                }
                 node_ptr = container->tail;
             }
             return temp;
@@ -202,6 +205,10 @@ public:
                 node_ptr = node_ptr->order_prev;
             } else {
                 // end() iterator, go to last element
+                if (!container->tail) {
+                    // Empty container
+                    throw invalid_iterator();
+                }
                 node_ptr = container->tail;
             }
             return *this;
@@ -283,11 +290,10 @@ public:
         }
         
         const_iterator& operator++() {
-            if (node_ptr) {
-                node_ptr = node_ptr->order_next;
-            } else {
+            if (!node_ptr) {
                 throw invalid_iterator();
             }
+            node_ptr = node_ptr->order_next;
             return *this;
         }
         
@@ -301,6 +307,10 @@ public:
                 node_ptr = node_ptr->order_prev;
             } else {
                 // end() iterator, go to last element
+                if (!container->tail) {
+                    // Empty container
+                    throw invalid_iterator();
+                }
                 node_ptr = container->tail;
             }
             return temp;
@@ -315,6 +325,10 @@ public:
                 node_ptr = node_ptr->order_prev;
             } else {
                 // end() iterator, go to last element
+                if (!container->tail) {
+                    // Empty container
+                    throw invalid_iterator();
+                }
                 node_ptr = container->tail;
             }
             return *this;
@@ -437,9 +451,13 @@ public:
 	 *   performing an insertion if such key does not already exist.
 	 */
 	T & operator[](const Key &key) {
-        iterator it = find(key);
-        if (it != end()) {
-            return it->second;
+        size_t index = get_bucket_index(key);
+        Node* node = buckets[index];
+        while (node) {
+            if (equal_func(node->data.first, key)) {
+                return node->data.second;
+            }
+            node = node->hash_next;
         }
         // Insert default constructed value
         T default_value = T();
